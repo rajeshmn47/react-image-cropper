@@ -1,76 +1,109 @@
-import { useState } from 'react';
-import ReactCrop from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
+import React, { useRef, useState } from 'react';
+import Cropper from 'react-easy-crop';
+import Slider from '@material-ui/core/Slider';
+import Button from '@material-ui/core/Button';
+import getCroppedImg from './utilities/cropImage';
+import './App.css';
+import logo from './images/logo192.png'
 
-function App() {
-const [src, setSrc] = useState(null);
-const [crop, setCrop] = useState({ aspect: 16 / 9 });
-const [image, setImage] = useState(null);
-const [output, setOutput] = useState(null);
+const App = () => {
+  const [image, setImage] = useState(null);
+  const [croppedArea, setCroppedArea] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedImage, setCroppedImage] = useState(null);
+  const inputRef = useRef();
+  const tyu=<img src={logo} alt='' width='400'/>
 
-const selectImage = (file) => {
-  setSrc(URL.createObjectURL(file));
-};
+  const triggerFileSelectPopup = () => inputRef.current.click(); 
 
-const cropImageNow = () => {
-  const canvas = document.createElement('canvas');
-  const scaleX = image.naturalWidth / image.width;
-  const scaleY = image.naturalHeight / image.height;
-  canvas.width = crop.width;
-  canvas.height = crop.height;
-  const ctx = canvas.getContext('2d');
+  const onCropComplete = (croppedAreaPercentage, croppedAreaPixels) => {
+    console.log(croppedAreaPixels, croppedAreaPercentage);
+    setCroppedArea(croppedAreaPixels);
+  };
 
-  const pixelRatio = window.devicePixelRatio;
-  canvas.width = crop.width * pixelRatio;
-  canvas.height = crop.height * pixelRatio;
-  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  ctx.imageSmoothingQuality = 'high';
+  const onSelectFile = event => {
+    if (event.target.files && event.target.files.length > 0) {
+      const reader = new FileReader(); 
+      reader.readAsDataURL(event.target.files[0]);
+      reader.addEventListener('load', () => {
+        setImage(reader.result);
+      });
+    }
+  };
 
-  ctx.drawImage(
-  image,
-  crop.x * scaleX,
-  crop.y * scaleY,
-  crop.width * scaleX,
-  crop.height * scaleY,
-  0,
-  0,
-  crop.width,
-  crop.height,
-  );
-  
-  // Converting to base64
-  const base64Image = canvas.toDataURL('image/jpeg');
-  setOutput(base64Image);
-};
+  const convertCanvasToImg = (canvas) => {
+    let img = new Image();
+    //img.src = canvas.toDataURL();
+    img.src = tyu.props.src
+    return img;
+  };
 
-return (
-  <div className="App">
-  <center>
-    <input
-    type="file"
-    accept="image/*"
-    onChange={(e) => {
-      selectImage(e.target.files[0]);
-    }}
-    />
-    <br />
-    <br />
-    <div>
-    {src && (
-      <div>
-      <ReactCrop src={src} onImageLoaded={setImage}
-        crop={crop} onChange={setCrop} />
-      <br />
-      <button onClick={cropImageNow}>Crop</button>
-      <br />
-      <br />
+  const onImageCrop = async () => {
+    let croppedImageCanvas = await getCroppedImg(image, croppedArea);
+    let croppedImage = convertCanvasToImg(croppedImageCanvas);
+
+    setCroppedImage(croppedImage);
+  }
+
+  console.log('CROPPED IMAGE:', croppedImage?.props,croppedImage);
+  console.log('rJESJJS',<img src={logo} alt='' width='400'/>)
+ 
+  console.log('source',tyu.props.src)
+  return (
+    <>
+    <div className="container">
+      <div className="container-cropper">
+        {
+          image ? 
+          <>
+            <div className="cropper">
+              <Cropper 
+                image={image}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete} />
+            </div>
+
+            <div className="slider">
+              <Slider 
+                min={1} 
+                max={3}
+                step={0.1}
+                value={zoom}
+                onChange={(e, zoom) => setZoom(zoom)} />
+            </div>
+          </> : null
+        }
       </div>
-    )}
+
+      <div className="container-buttons">
+        <input 
+          type="file" 
+          accept="image/*" 
+          ref={inputRef} 
+          style={{ display: "none" }} 
+          onChange={onSelectFile} />
+        <Button variant="contained" color="primary" onClick={triggerFileSelectPopup}>
+          Choose
+        </Button>
+        <Button variant="contained" color="secondary" onClick={onImageCrop} style={{ marginLeft: "20px" }}>
+          Download
+        </Button>
+      </div>
+   
     </div>
-    <div>{output && <img src={output} />}</div>
-  </center>
-  </div>
-);
-}
+    <div>
+     {croppedImage&&<img src={logo} alt='' width='400'/>}
+     <img src={croppedImage} alt='' width='233' />
+     </div>
+     {croppedImage&&<img src={tyu.props.src} alt='' />}
+     <img src={croppedImage} alt=''/>
+     </>
+  );
+};
 
 export default App;
