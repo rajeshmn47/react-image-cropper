@@ -8,7 +8,7 @@ import { Button } from "@mui/material";
 function App() {
   const [imageToCrop, setImageToCrop] = useState(undefined);
   const [croppedImage, setCroppedImage] = useState(undefined);
-  const [value, setValue] = React.useState(1);
+  const [value, setValue] = React.useState(10);
   const [contrast, setContrast] = React.useState(1);
   const handleChange = (event, newValue) => {
     console.log(newValue)
@@ -59,13 +59,14 @@ function App() {
         <>
         <div>
           <h2>Cropped Image</h2>
-          <img alt="Cropped Img" style={{filter:`brightness(${value/10})`,filter:`contrast(${contrast/10})`}} src={croppedImage} />
+          <img alt="Cropped Img" style={{filter:`contrast(${contrast/10})`,filter:`brightness(${value/10})`}} src={croppedImage} />
         </div>
         <div style={{display:'flex',justifyContent:'center',flexDirection:'column',alignItems:'center'}}>
-          <h1>Brightness</h1>
-      <Slider aria-label="Volume" value={value} onChange={handleChange} style={{width:'50vw'}}/>
+        <h1>Brightness</h1>
+      <Slider aria-label="Volume" value={value} onChange={handleChange} style={{width:'50vw'}}/>   
       <h1>Contrast</h1>
       <Slider aria-label="Volume" value={contrast} onChange={handlecontrast} style={{width:'50vw'}}/>
+    
       </div>
       {croppedImage&&<a
          href={croppedImage}
