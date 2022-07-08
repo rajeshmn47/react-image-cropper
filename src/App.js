@@ -1,109 +1,85 @@
-import React, { useRef, useState } from 'react';
-import Cropper from 'react-easy-crop';
-import Slider from '@material-ui/core/Slider';
-import Button from '@material-ui/core/Button';
-import getCroppedImg from './utilities/cropImage';
-import './App.css';
-import logo from './images/logo192.png'
+import React, { useState } from "react";
+import "./App.css";
+import ImageCropper from "./components/ImageCropper";
+import Slider from '@mui/material/Slider';
+import { Button } from "@mui/material";
 
-const App = () => {
-  const [image, setImage] = useState(null);
-  const [croppedArea, setCroppedArea] = useState(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedImage, setCroppedImage] = useState(null);
-  const inputRef = useRef();
-  const tyu=<img src={logo} alt='' width='400'/>
 
-  const triggerFileSelectPopup = () => inputRef.current.click(); 
-
-  const onCropComplete = (croppedAreaPercentage, croppedAreaPixels) => {
-    console.log(croppedAreaPixels, croppedAreaPercentage);
-    setCroppedArea(croppedAreaPixels);
+function App() {
+  const [imageToCrop, setImageToCrop] = useState(undefined);
+  const [croppedImage, setCroppedImage] = useState(undefined);
+  const [value, setValue] = React.useState(1);
+  const [contrast, setContrast] = React.useState(1);
+  const handleChange = (event, newValue) => {
+    console.log(newValue)
+    setValue(newValue);
   };
 
-  const onSelectFile = event => {
+  const handlecontrast = (event, newValue) => {
+    console.log(newValue)
+    setContrast(newValue);
+  };
+
+
+  const onUploadFile = (event) => {
     if (event.target.files && event.target.files.length > 0) {
-      const reader = new FileReader(); 
-      reader.readAsDataURL(event.target.files[0]);
-      reader.addEventListener('load', () => {
-        setImage(reader.result);
+      const reader = new FileReader();
+
+      reader.addEventListener("load", () => {
+        const image = reader.result;
+
+        setImageToCrop(image);
       });
+
+      reader.readAsDataURL(event.target.files[0]);
     }
   };
-
-  const convertCanvasToImg = (canvas) => {
-    let img = new Image();
-    //img.src = canvas.toDataURL();
-    img.src = tyu.props.src
-    return img;
+  const download = (a) => {
+    var element = document.createElement("a");
+    var file = new Blob(
+      [
+      a
+      ],
+      { type: "image/*" }
+    );
+    element.href = URL.createObjectURL(file);
+    element.download = "image.jpg";
+    element.click();
   };
-
-  const onImageCrop = async () => {
-    let croppedImageCanvas = await getCroppedImg(image, croppedArea);
-    let croppedImage = convertCanvasToImg(croppedImageCanvas);
-
-    setCroppedImage(croppedImage);
-  }
-
-  console.log('CROPPED IMAGE:', croppedImage?.props,croppedImage);
-  console.log('rJESJJS',<img src={logo} alt='' width='400'/>)
- 
-  console.log('source',tyu.props.src)
   return (
-    <>
-    <div className="container">
-      <div className="container-cropper">
-        {
-          image ? 
-          <>
-            <div className="cropper">
-              <Cropper 
-                image={image}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete} />
-            </div>
-
-            <div className="slider">
-              <Slider 
-                min={1} 
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={(e, zoom) => setZoom(zoom)} />
-            </div>
-          </> : null
-        }
+    <div className="app">
+      <input type="file" accept="image/*" onChange={onUploadFile} />
+      <div style={{maxHeight:'85vh'}}>
+        <ImageCropper
+          imageToCrop={imageToCrop}
+          onImageCropped={(croppedImage) => setCroppedImage(croppedImage)}
+        />
       </div>
-
-      <div className="container-buttons">
-        <input 
-          type="file" 
-          accept="image/*" 
-          ref={inputRef} 
-          style={{ display: "none" }} 
-          onChange={onSelectFile} />
-        <Button variant="contained" color="primary" onClick={triggerFileSelectPopup}>
-          Choose
-        </Button>
-        <Button variant="contained" color="secondary" onClick={onImageCrop} style={{ marginLeft: "20px" }}>
-          Download
-        </Button>
+      {croppedImage && (
+        <>
+        <div>
+          <h2>Cropped Image</h2>
+          <img alt="Cropped Img" style={{filter:`brightness(${value/10})`,filter:`contrast(${contrast/10})`}} src={croppedImage} />
+        </div>
+        <div style={{display:'flex',justifyContent:'center',flexDirection:'column',alignItems:'center'}}>
+          <h1>Brightness</h1>
+      <Slider aria-label="Volume" value={value} onChange={handleChange} style={{width:'50vw'}}/>
+      <h1>Contrast</h1>
+      <Slider aria-label="Volume" value={contrast} onChange={handlecontrast} style={{width:'50vw'}}/>
       </div>
-   
+      {croppedImage&&<a
+         href={croppedImage}
+         download
+         onClick={() => download(croppedImage)}
+       >
+         <i className="fa fa-download" />
+      <Button>Download</Button>
+       </a>}
+      </>
+      )}
+     
     </div>
-    <div>
-     {croppedImage&&<img src={logo} alt='' width='400'/>}
-     <img src={croppedImage} alt='' width='233' />
-     </div>
-     {croppedImage&&<img src={tyu.props.src} alt='' />}
-     <img src={croppedImage} alt=''/>
-     </>
   );
-};
+}
 
 export default App;
